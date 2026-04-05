@@ -30,7 +30,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ansvar-systems/ch-pest-management-mcp"
+    "url": "https://github.com/Ansvar-Systems/ch-pest-management-mcp"
   },
   "homepage": "https://ansvar.eu/open-agriculture",
   "engines": {
