@@ -11,14 +11,13 @@ import { createDatabase } from './db.js';
 import { handleAbout } from './tools/about.js';
 import { handleListSources } from './tools/list-sources.js';
 import { handleCheckFreshness } from './tools/check-freshness.js';
-import { handleSearchCropRequirements } from './tools/search-crop-requirements.js';
-import { handleGetNutrientPlan } from './tools/get-nutrient-plan.js';
-import { handleGetSoilClassification } from './tools/get-soil-classification.js';
-import { handleListCrops } from './tools/list-crops.js';
-import { handleGetCropDetails } from './tools/get-crop-details.js';
-import { handleGetCommodityPrice } from './tools/get-commodity-price.js';
-import { handleCalculateMargin } from './tools/calculate-margin.js';
-import { handleGetManureValues } from './tools/get-manure-values.js';
+import { handleSearchPests } from './tools/search-pests.js';
+import { handleGetPestDetails } from './tools/get-pest-details.js';
+import { handleGetTreatments } from './tools/get-treatments.js';
+import { handleGetIpmGuidance } from './tools/get-ipm-guidance.js';
+import { handleSearchCropThreats } from './tools/search-crop-threats.js';
+import { handleIdentifyFromSymptoms } from './tools/identify-from-symptoms.js';
+import { handleGetApprovedProducts } from './tools/get-approved-products.js';
 
 const SERVER_NAME = 'ch-pest-management-mcp';
 const SERVER_VERSION = '0.1.0';
@@ -40,13 +39,14 @@ const TOOLS = [
     inputSchema: { type: 'object' as const, properties: {} },
   },
   {
-    name: 'search_crop_requirements',
-    description: 'Search crop nutrient requirements, soil data, and recommendations. Use for broad queries about Swiss crops and nutrients.',
+    name: 'search_pests',
+    description: 'Search pests, diseases, and weeds affecting Swiss crops. Use for broad queries about Schaedlinge, Krankheiten, Unkraeuter.',
     inputSchema: {
       type: 'object' as const,
       properties: {
-        query: { type: 'string', description: 'Free-text search query (German, French, or English)' },
-        crop_group: { type: 'string', description: 'Filter by crop group (e.g. getreide, oelsaaten, hackfruechte)' },
+        query: { type: 'string', description: 'Free-text search query (German or English, e.g. "Blattlaeuse Weizen", "Septoria")' },
+        pest_type: { type: 'string', description: 'Filter by type: insect, disease, or weed' },
+        crop: { type: 'string', description: 'Filter by affected crop (e.g. Winterweizen, Kartoffeln, Reben)' },
         jurisdiction: { type: 'string', description: 'ISO 3166-1 alpha-2 code (default: CH)' },
         limit: { type: 'number', description: 'Max results (default: 20, max: 50)' },
       },
@@ -54,147 +54,127 @@ const TOOLS = [
     },
   },
   {
-    name: 'get_nutrient_plan',
-    description: 'Get NPK+Mg fertiliser recommendation for a specific crop and soil type. Based on GRUD (Agroscope).',
+    name: 'get_pest_details',
+    description: 'Get full profile for a pest: lifecycle, identification, crops affected, and treatments. Use pest ID from search_pests.',
     inputSchema: {
       type: 'object' as const,
       properties: {
-        crop: { type: 'string', description: 'Crop ID or name (e.g. winterweizen, winterraps)' },
-        soil_type: { type: 'string', description: 'Soil type ID or name (e.g. mittlerer-lehm)' },
-        altitude_zone: { type: 'string', description: 'Altitude zone: talzone, huegelzone, bergzone_i-iv (default: talzone)' },
-        previous_crop: { type: 'string', description: 'Previous crop group for rotation adjustment' },
+        pest_id: { type: 'string', description: 'Pest ID (e.g. blattlaeuse, septoria, ackerfuchsschwanz)' },
         jurisdiction: { type: 'string', description: 'ISO 3166-1 alpha-2 code (default: CH)' },
       },
-      required: ['crop', 'soil_type'],
+      required: ['pest_id'],
     },
   },
   {
-    name: 'get_soil_classification',
-    description: 'Get soil group, characteristics, pH class, and drainage for a Swiss soil type.',
+    name: 'get_treatments',
+    description: 'Get approved chemical and non-chemical controls for a specific pest. Includes products, active substances, and OELN alternatives.',
     inputSchema: {
       type: 'object' as const,
       properties: {
-        soil_type: { type: 'string', description: 'Soil type ID or name' },
-        texture: { type: 'string', description: 'Soil texture (e.g. lehm, ton, sand)' },
-        ph_class: { type: 'string', description: 'pH class (A-E)' },
+        pest_id: { type: 'string', description: 'Pest ID (e.g. rapsglanzkaefer, krautfaeule)' },
+        approach: { type: 'string', description: 'Filter by approach: chemical, biological, cultural, or mechanical' },
         jurisdiction: { type: 'string', description: 'ISO 3166-1 alpha-2 code (default: CH)' },
       },
+      required: ['pest_id'],
     },
   },
   {
-    name: 'list_crops',
-    description: 'List all crops in the database, optionally filtered by crop group.',
+    name: 'get_ipm_guidance',
+    description: 'Get IPM (Integrierter Pflanzenschutz) guidance for a crop: OELN Schadschwellen, monitoring methods, cultural controls, prognosis systems.',
     inputSchema: {
       type: 'object' as const,
       properties: {
-        crop_group: { type: 'string', description: 'Filter by crop group (e.g. getreide)' },
-        jurisdiction: { type: 'string', description: 'ISO 3166-1 alpha-2 code (default: CH)' },
-      },
-    },
-  },
-  {
-    name: 'get_crop_details',
-    description: 'Get full profile for a crop: GRUD nutrient norms, typical yields, growth stages.',
-    inputSchema: {
-      type: 'object' as const,
-      properties: {
-        crop: { type: 'string', description: 'Crop ID or name' },
+        crop: { type: 'string', description: 'Crop name (e.g. Winterweizen, Kartoffeln, Reben, Apfel)' },
+        pest_id: { type: 'string', description: 'Optional: filter to specific pest' },
         jurisdiction: { type: 'string', description: 'ISO 3166-1 alpha-2 code (default: CH)' },
       },
       required: ['crop'],
     },
   },
   {
-    name: 'get_commodity_price',
-    description: 'Get latest Swiss commodity price for a crop. Warns if data is stale (>14 days).',
+    name: 'search_crop_threats',
+    description: 'List all pests, diseases, and weeds that threaten a specific crop, with damage thresholds and monitoring advice.',
     inputSchema: {
       type: 'object' as const,
       properties: {
-        crop: { type: 'string', description: 'Crop ID or name' },
-        market: { type: 'string', description: 'Market type (e.g. produzentenpreis, franko-muehle)' },
+        crop: { type: 'string', description: 'Crop name (e.g. Winterweizen, Winterraps, Kartoffeln)' },
+        growth_stage: { type: 'string', description: 'Optional growth stage filter (e.g. Bestockung, Bluete, Knollenbildung)' },
         jurisdiction: { type: 'string', description: 'ISO 3166-1 alpha-2 code (default: CH)' },
       },
       required: ['crop'],
     },
   },
   {
-    name: 'calculate_margin',
-    description: 'Estimate gross margin for a crop. Uses current commodity price if price_per_tonne not provided.',
+    name: 'identify_from_symptoms',
+    description: 'Identify a pest, disease, or weed from symptom descriptions. Returns ranked differential diagnosis.',
     inputSchema: {
       type: 'object' as const,
       properties: {
-        crop: { type: 'string', description: 'Crop ID or name' },
-        yield_t_ha: { type: 'number', description: 'Expected yield in tonnes per hectare' },
-        price_per_tonne: { type: 'number', description: 'Override price (CHF/t). If omitted, uses latest market price.' },
-        input_costs: { type: 'number', description: 'Total input costs per hectare (CHF). Default: 0' },
+        symptoms: { type: 'string', description: 'Symptom description (e.g. "gelbe Flecken auf Weizenblaettern", "Frass an Rapsblueten")' },
+        crop: { type: 'string', description: 'Affected crop for narrowing results' },
+        season: { type: 'string', description: 'Time of year (e.g. Fruehling, Sommer, Herbst)' },
         jurisdiction: { type: 'string', description: 'ISO 3166-1 alpha-2 code (default: CH)' },
       },
-      required: ['crop', 'yield_t_ha'],
+      required: ['symptoms'],
     },
   },
   {
-    name: 'get_manure_values',
-    description: 'Get manure nutrient content (N, P2O5, K2O) per GVE by animal category and housing system. Based on GRUD manure tables.',
+    name: 'get_approved_products',
+    description: 'Search approved plant protection products (Pflanzenschutzmittel) from the BLW Verzeichnis. Filter by active substance, target pest, or crop.',
     inputSchema: {
       type: 'object' as const,
       properties: {
-        animal_category: { type: 'string', description: 'Animal category (e.g. milchkuh, mastschwein, legehenne)' },
-        housing_system: { type: 'string', description: 'Housing system (e.g. laufstall, anbindestall)' },
+        active_substance: { type: 'string', description: 'Active substance name (e.g. Glyphosat, Mancozeb, Spinosad)' },
+        target_pest: { type: 'string', description: 'Target organism (e.g. Blattlaeuse, Unkraeuter, Pilzkrankheiten)' },
+        crop: { type: 'string', description: 'Target crop (e.g. Winterweizen, Kartoffeln, Reben)' },
         jurisdiction: { type: 'string', description: 'ISO 3166-1 alpha-2 code (default: CH)' },
       },
     },
   },
 ];
 
-const SearchArgsSchema = z.object({
+const SearchPestsArgsSchema = z.object({
   query: z.string(),
-  crop_group: z.string().optional(),
+  pest_type: z.string().optional(),
+  crop: z.string().optional(),
   jurisdiction: z.string().optional(),
   limit: z.number().optional(),
 });
 
-const NutrientPlanArgsSchema = z.object({
+const PestDetailsArgsSchema = z.object({
+  pest_id: z.string(),
+  jurisdiction: z.string().optional(),
+});
+
+const TreatmentsArgsSchema = z.object({
+  pest_id: z.string(),
+  approach: z.string().optional(),
+  jurisdiction: z.string().optional(),
+});
+
+const IpmGuidanceArgsSchema = z.object({
   crop: z.string(),
-  soil_type: z.string(),
-  altitude_zone: z.string().optional(),
-  previous_crop: z.string().optional(),
+  pest_id: z.string().optional(),
   jurisdiction: z.string().optional(),
 });
 
-const SoilArgsSchema = z.object({
-  soil_type: z.string().optional(),
-  texture: z.string().optional(),
-  ph_class: z.string().optional(),
-  jurisdiction: z.string().optional(),
-});
-
-const ListCropsArgsSchema = z.object({
-  crop_group: z.string().optional(),
-  jurisdiction: z.string().optional(),
-});
-
-const CropDetailsArgsSchema = z.object({
+const CropThreatsArgsSchema = z.object({
   crop: z.string(),
+  growth_stage: z.string().optional(),
   jurisdiction: z.string().optional(),
 });
 
-const PriceArgsSchema = z.object({
-  crop: z.string(),
-  market: z.string().optional(),
+const IdentifyArgsSchema = z.object({
+  symptoms: z.string(),
+  crop: z.string().optional(),
+  season: z.string().optional(),
   jurisdiction: z.string().optional(),
 });
 
-const MarginArgsSchema = z.object({
-  crop: z.string(),
-  yield_t_ha: z.number(),
-  price_per_tonne: z.number().optional(),
-  input_costs: z.number().optional(),
-  jurisdiction: z.string().optional(),
-});
-
-const ManureArgsSchema = z.object({
-  animal_category: z.string().optional(),
-  housing_system: z.string().optional(),
+const ApprovedProductsArgsSchema = z.object({
+  active_substance: z.string().optional(),
+  target_pest: z.string().optional(),
+  crop: z.string().optional(),
   jurisdiction: z.string().optional(),
 });
 
@@ -226,22 +206,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return textResult(handleListSources(db));
       case 'check_data_freshness':
         return textResult(handleCheckFreshness(db));
-      case 'search_crop_requirements':
-        return textResult(handleSearchCropRequirements(db, SearchArgsSchema.parse(args)));
-      case 'get_nutrient_plan':
-        return textResult(handleGetNutrientPlan(db, NutrientPlanArgsSchema.parse(args)));
-      case 'get_soil_classification':
-        return textResult(handleGetSoilClassification(db, SoilArgsSchema.parse(args)));
-      case 'list_crops':
-        return textResult(handleListCrops(db, ListCropsArgsSchema.parse(args)));
-      case 'get_crop_details':
-        return textResult(handleGetCropDetails(db, CropDetailsArgsSchema.parse(args)));
-      case 'get_commodity_price':
-        return textResult(handleGetCommodityPrice(db, PriceArgsSchema.parse(args)));
-      case 'calculate_margin':
-        return textResult(handleCalculateMargin(db, MarginArgsSchema.parse(args)));
-      case 'get_manure_values':
-        return textResult(handleGetManureValues(db, ManureArgsSchema.parse(args)));
+      case 'search_pests':
+        return textResult(handleSearchPests(db, SearchPestsArgsSchema.parse(args)));
+      case 'get_pest_details':
+        return textResult(handleGetPestDetails(db, PestDetailsArgsSchema.parse(args)));
+      case 'get_treatments':
+        return textResult(handleGetTreatments(db, TreatmentsArgsSchema.parse(args)));
+      case 'get_ipm_guidance':
+        return textResult(handleGetIpmGuidance(db, IpmGuidanceArgsSchema.parse(args)));
+      case 'search_crop_threats':
+        return textResult(handleSearchCropThreats(db, CropThreatsArgsSchema.parse(args)));
+      case 'identify_from_symptoms':
+        return textResult(handleIdentifyFromSymptoms(db, IdentifyArgsSchema.parse(args)));
+      case 'get_approved_products':
+        return textResult(handleGetApprovedProducts(db, ApprovedProductsArgsSchema.parse(args)));
       default:
         return errorResult(`Unknown tool: ${name}`);
     }

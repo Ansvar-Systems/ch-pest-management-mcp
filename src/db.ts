@@ -42,71 +42,70 @@ export function createDatabase(dbPath?: string): Database {
 
 function initSchema(db: BetterSqlite3.Database): void {
   db.exec(`
-    CREATE TABLE IF NOT EXISTS crops (
+    CREATE TABLE IF NOT EXISTS pests (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
-      crop_group TEXT NOT NULL,
-      typical_yield_t_ha REAL,
-      nutrient_offtake_n REAL,
-      nutrient_offtake_p2o5 REAL,
-      nutrient_offtake_k2o REAL,
-      growth_stages TEXT,
-      altitude_zone TEXT DEFAULT 'talzone',
+      pest_type TEXT NOT NULL CHECK (pest_type IN ('insect', 'disease', 'weed')),
+      scientific_name TEXT,
+      crops_affected TEXT NOT NULL,
+      crop_category TEXT,
+      lifecycle TEXT,
+      identification TEXT,
+      damage_description TEXT,
+      language TEXT DEFAULT 'DE',
       jurisdiction TEXT NOT NULL DEFAULT 'CH'
     );
 
-    CREATE TABLE IF NOT EXISTS soil_types (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      soil_group INTEGER,
-      texture TEXT,
-      drainage_class TEXT,
-      ph_class TEXT,
-      description TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS nutrient_recommendations (
+    CREATE TABLE IF NOT EXISTS treatments (
       id INTEGER PRIMARY KEY,
-      crop_id TEXT REFERENCES crops(id),
-      soil_group INTEGER,
-      altitude_zone TEXT DEFAULT 'talzone',
-      previous_crop_group TEXT,
-      n_rec_kg_ha REAL,
-      p_rec_kg_ha REAL,
-      k_rec_kg_ha REAL,
-      mg_rec_kg_ha REAL,
-      notes TEXT,
-      grud_section TEXT,
-      jurisdiction TEXT NOT NULL DEFAULT 'CH'
-    );
-
-    CREATE TABLE IF NOT EXISTS manure_values (
-      id INTEGER PRIMARY KEY,
-      animal_category TEXT NOT NULL,
-      housing_system TEXT,
-      n_per_gve REAL,
-      p2o5_per_gve REAL,
-      k2o_per_gve REAL,
-      nh3_loss_pct REAL,
+      pest_id TEXT NOT NULL REFERENCES pests(id),
+      approach TEXT NOT NULL CHECK (approach IN ('chemical', 'biological', 'cultural', 'mechanical')),
+      product_name TEXT,
+      active_substance TEXT,
+      w_number TEXT,
+      dosage TEXT,
+      waiting_period TEXT,
+      timing TEXT,
+      restrictions TEXT,
+      pufferstreifen TEXT,
       notes TEXT,
       jurisdiction TEXT NOT NULL DEFAULT 'CH'
     );
 
-    CREATE TABLE IF NOT EXISTS commodity_prices (
+    CREATE TABLE IF NOT EXISTS ipm_guidance (
       id INTEGER PRIMARY KEY,
-      crop_id TEXT REFERENCES crops(id),
-      market TEXT,
-      price_per_tonne REAL,
-      currency TEXT DEFAULT 'CHF',
-      price_source TEXT NOT NULL,
-      published_date TEXT,
-      retrieved_at TEXT,
-      source TEXT,
+      crop TEXT NOT NULL,
+      crop_category TEXT,
+      pest_id TEXT REFERENCES pests(id),
+      threshold TEXT,
+      monitoring_method TEXT,
+      cultural_controls TEXT,
+      prognose_system TEXT,
+      oeln_requirements TEXT,
+      notes TEXT,
+      jurisdiction TEXT NOT NULL DEFAULT 'CH'
+    );
+
+    CREATE TABLE IF NOT EXISTS approved_products (
+      id INTEGER PRIMARY KEY,
+      w_number TEXT NOT NULL,
+      product_name TEXT NOT NULL,
+      active_substance TEXT NOT NULL,
+      product_type TEXT,
+      crops TEXT,
+      target_organisms TEXT,
+      auflagen TEXT,
+      wartefrist TEXT,
+      dosage TEXT,
+      application_method TEXT,
+      spe3_buffer TEXT,
+      aktionsplan_status TEXT,
+      language TEXT DEFAULT 'DE',
       jurisdiction TEXT NOT NULL DEFAULT 'CH'
     );
 
     CREATE VIRTUAL TABLE IF NOT EXISTS search_index USING fts5(
-      title, body, crop_group, jurisdiction
+      title, body, pest_type, crop_category, jurisdiction
     );
 
     CREATE TABLE IF NOT EXISTS db_metadata (
@@ -115,20 +114,20 @@ function initSchema(db: BetterSqlite3.Database): void {
     );
 
     INSERT OR IGNORE INTO db_metadata (key, value) VALUES ('schema_version', '1.0');
-    INSERT OR IGNORE INTO db_metadata (key, value) VALUES ('mcp_name', 'Switzerland Crop Nutrients MCP');
+    INSERT OR IGNORE INTO db_metadata (key, value) VALUES ('mcp_name', 'Switzerland Pest Management MCP');
     INSERT OR IGNORE INTO db_metadata (key, value) VALUES ('jurisdiction', 'CH');
   `);
 }
 
-const FTS_COLUMNS = ['title', 'body', 'crop_group', 'jurisdiction'];
+const FTS_COLUMNS = ['title', 'body', 'pest_type', 'crop_category', 'jurisdiction'];
 
 export function ftsSearch(
   db: Database,
   query: string,
   limit: number = 20
-): { title: string; body: string; crop_group: string; jurisdiction: string; rank: number }[] {
+): { title: string; body: string; pest_type: string; crop_category: string; jurisdiction: string; rank: number }[] {
   const { results } = tieredFtsSearch(db, 'search_index', FTS_COLUMNS, query, limit);
-  return results as { title: string; body: string; crop_group: string; jurisdiction: string; rank: number }[];
+  return results as { title: string; body: string; pest_type: string; crop_category: string; jurisdiction: string; rank: number }[];
 }
 
 /**
@@ -183,7 +182,7 @@ export function tieredFtsSearch(
   }
 
   // Tier 6: LIKE fallback
-  const baseCols = ['name', 'crop_group'];
+  const baseCols = ['name', 'pest_type'];
   const likeConditions = words.map(() =>
     `(${baseCols.map(c => `${c} LIKE ?`).join(' OR ')})`
   ).join(' AND ');
@@ -192,7 +191,7 @@ export function tieredFtsSearch(
   );
   try {
     const likeResults = db.all<Record<string, unknown>>(
-      `SELECT name as title, COALESCE(growth_stages, '') as body, crop_group, jurisdiction FROM crops WHERE ${likeConditions} LIMIT ?`,
+      `SELECT name as title, COALESCE(identification, '') as body, pest_type, COALESCE(crop_category, '') as crop_category, jurisdiction FROM pests WHERE ${likeConditions} LIMIT ?`,
       [...likeParams, limit]
     );
     if (likeResults.length > 0) return { tier: 'like', results: likeResults };
@@ -219,7 +218,7 @@ function tryFts(
 
 function sanitizeFtsInput(query: string): string {
   return query
-    .replace(/["""'',,,,]/g, '"')
+    .replace(/["\u201C\u201D\u2018\u2019\u201A\u201E\u2039\u203A]/g, '"')
     .replace(/[^a-zA-Z0-9\s*"_\u00C0-\u024F-]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();

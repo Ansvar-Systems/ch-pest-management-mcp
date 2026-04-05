@@ -1,20 +1,34 @@
 {
-  "server": "ch-crop-nutrients-mcp",
+  "server": "ch-pest-management-mcp",
   "jurisdiction": "CH",
   "version": "0.1.0",
   "last_ingest": "2026-04-05",
   "data": {
-    "crops": 18,
-    "soil_types": 10,
-    "nutrient_recommendations": 15,
-    "manure_values": 11,
-    "commodity_prices": 12
+    "pests": 23,
+    "pests_insects": 9,
+    "pests_diseases": 8,
+    "pests_weeds": 6,
+    "treatments": 30,
+    "ipm_guidance": 12,
+    "approved_products": 14,
+    "prognosis_systems": [
+      "PhytoPRE",
+      "SOPRA",
+      "FusaProg",
+      "VitiMeteo"
+    ],
+    "crop_categories": [
+      "feldbau",
+      "rebbau",
+      "obstbau",
+      "gemuese"
+    ]
   },
-  "tools": 11,
+  "tools": 10,
   "sources": [
-    "GRUD 2017 (Agroscope)",
-    "Suisse-Bilanz Wegleitung (BLW)",
-    "AGRIDEA",
-    "SBV/swiss granum"
+    "BLW Pflanzenschutzmittelverzeichnis (psm.admin.ch)",
+    "Agroscope Pflanzenschutzempfehlungen",
+    "AGRIDEA OELN-Checklisten",
+    "Aktionsplan Pflanzenschutzmittel"
   ]
 }

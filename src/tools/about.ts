@@ -3,15 +3,21 @@ import { SUPPORTED_JURISDICTIONS } from '../jurisdiction.js';
 
 export function handleAbout() {
   return {
-    name: 'Switzerland Crop Nutrients MCP',
+    name: 'Switzerland Pest Management MCP',
     description:
-      'Swiss crop nutrient recommendations based on GRUD (Agroscope), Suisse-Bilanz (BLW), and OELN standards. ' +
-      'Provides NPK planning, soil classification, nitrogen balance (Suisse-Bilanz), manure nutrient values, ' +
-      'and commodity pricing for agricultural decision-making in Switzerland.',
+      'Swiss crop protection and pest management data based on the BLW Pflanzenschutzmittelverzeichnis, ' +
+      'Agroscope Pflanzenschutzempfehlungen, OELN-Schadschwellenprinzip, and the Aktionsplan Pflanzenschutzmittel. ' +
+      'Covers pests (insects, diseases, weeds), approved products, IPM guidance, damage thresholds, ' +
+      'and prognosis systems (PhytoPRE, SOPRA, FusaProg) for Swiss agriculture.',
     version: '0.1.0',
     jurisdiction: [...SUPPORTED_JURISDICTIONS],
-    data_sources: ['GRUD 2017 (Agroscope)', 'Suisse-Bilanz Wegleitung (BLW)', 'AGRIDEA Duengungsplanung', 'SBV Produzentenpreise'],
-    tools_count: 11,
+    data_sources: [
+      'BLW Pflanzenschutzmittelverzeichnis (psm.admin.ch)',
+      'Agroscope Pflanzenschutzempfehlungen',
+      'AGRIDEA OELN-Checklisten (Feldbau, Rebbau, Obstbau)',
+      'Aktionsplan Pflanzenschutzmittel',
+    ],
+    tools_count: 10,
     links: {
       homepage: 'https://ansvar.eu/open-agriculture',
       repository: 'https://github.com/ansvar-systems/ch-pest-management-mcp',

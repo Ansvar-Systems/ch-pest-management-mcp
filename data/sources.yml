@@ -1,29 +1,57 @@
-# Data sources for ch-crop-nutrients-mcp
+# Data sources for ch-pest-management-mcp
 sources:
-  - name: GRUD 2017
-    authority: Agroscope
-    url: https://www.agroscope.admin.ch/agroscope/de/home/themen/pflanzenbau/duengung.html
-    license: Swiss Federal Administration — free reuse
-    update_frequency: periodic (major revision ~10 years)
-    last_retrieved: "2026-04-05"
-
-  - name: Suisse-Bilanz Wegleitung
+  - name: BLW Pflanzenschutzmittelverzeichnis
     authority: Bundesamt fuer Landwirtschaft (BLW)
-    url: https://www.blw.admin.ch/blw/de/home/instrumente/direktzahlungen/oekologischer-leistungsnachweis.html
+    url: https://www.psm.admin.ch/de/produkte
     license: Swiss Federal Administration — free reuse
-    update_frequency: annual (with DZV updates)
+    update_frequency: continuous (products added/removed)
     last_retrieved: "2026-04-05"
 
-  - name: swiss granum Richtpreise
-    authority: swiss granum / SBV
-    url: https://www.swissgranum.ch/richtpreise
-    license: Public price information
-    update_frequency: annual (harvest season)
+  - name: Agroscope Pflanzenschutzempfehlungen
+    authority: Agroscope
+    url: https://www.agroscope.admin.ch/agroscope/de/home/themen/pflanzenbau/pflanzenschutz.html
+    license: Swiss Federal Administration — free reuse
+    update_frequency: annual
     last_retrieved: "2026-04-05"
 
-  - name: swisspatat Richtpreise
-    authority: swisspatat
-    url: https://www.swisspatat.ch
-    license: Public price information
-    update_frequency: seasonal
+  - name: AGRIDEA OELN-Pflanzenschutz-Checklisten
+    authority: AGRIDEA
+    url: https://www.agridea.ch/de/themen/pflanzenbau/pflanzenschutz/
+    license: Public advisory material
+    update_frequency: annual
+    last_retrieved: "2026-04-05"
+
+  - name: Aktionsplan Pflanzenschutzmittel
+    authority: Bundesrat / BLW
+    url: https://www.blw.admin.ch/blw/de/home/nachhaltige-produktion/pflanzenschutz/aktionsplan.html
+    license: Swiss Federal Administration — free reuse
+    update_frequency: periodic (adopted 2017, targets to 2027)
+    last_retrieved: "2026-04-05"
+
+  - name: PhytoPRE Prognosemodell
+    authority: Agroscope
+    url: https://www.phytopre.ch
+    license: Public access
+    update_frequency: real-time (growing season)
+    last_retrieved: "2026-04-05"
+
+  - name: SOPRA Schaedlingsprognose
+    authority: Agroscope
+    url: https://www.sopra.info
+    license: Public access
+    update_frequency: real-time (growing season)
+    last_retrieved: "2026-04-05"
+
+  - name: FusaProg Fusariumprognose
+    authority: Agroscope / Meteotest
+    url: https://www.fusaprog.ch
+    license: Public access
+    update_frequency: real-time (growing season)
+    last_retrieved: "2026-04-05"
+
+  - name: VitiMeteo Rebenprognose
+    authority: Agroscope Changins
+    url: https://www.vitimeteo.info
+    license: Public access
+    update_frequency: real-time (growing season)
     last_retrieved: "2026-04-05"
