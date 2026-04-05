@@ -1,0 +1,71 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.Ansvar-Systems/ch-pest-management",
+  "description": "Swiss crop protection and pest management data: pests, diseases, weeds, approved products (BLW Pflanzenschutzmittelverzeichnis), IPM guidance, OELN Schadschwellen, prognosis systems",
+  "repository": {
+    "url": "https://github.com/Ansvar-Systems/ch-pest-management-mcp",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@ansvar/ch-pest-management-mcp",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ],
+  "remoteEndpoints": [
+    {
+      "url": "https://mcp.ansvar.eu/ch-pest-management/mcp",
+      "transport": {
+        "type": "streamable-http"
+      }
+    }
+  ],
+  "tools": [
+    {
+      "name": "about",
+      "description": "Server metadata, dataset statistics, freshness, and provenance. No input parameters needed."
+    },
+    {
+      "name": "list_sources",
+      "description": "List all data sources with authority, URL, license, and freshness info."
+    },
+    {
+      "name": "check_data_freshness",
+      "description": "Check when data was last ingested, staleness status, and how to trigger a refresh."
+    },
+    {
+      "name": "search_pests",
+      "description": "Search pests, diseases, and weeds affecting Swiss crops. Supports German and English queries with tiered FTS5 search."
+    },
+    {
+      "name": "get_pest_details",
+      "description": "Get full profile for a pest: lifecycle, identification, crops affected, and treatments."
+    },
+    {
+      "name": "get_treatments",
+      "description": "Get approved chemical and non-chemical controls for a specific pest. Includes products, active substances, and OELN alternatives."
+    },
+    {
+      "name": "get_ipm_guidance",
+      "description": "Get IPM guidance for a crop: OELN Schadschwellen, monitoring methods, cultural controls, prognosis systems."
+    },
+    {
+      "name": "search_crop_threats",
+      "description": "List all pests, diseases, and weeds that threaten a specific crop, with damage thresholds and monitoring advice."
+    },
+    {
+      "name": "identify_from_symptoms",
+      "description": "Identify a pest, disease, or weed from symptom descriptions. Returns ranked differential diagnosis."
+    },
+    {
+      "name": "get_approved_products",
+      "description": "Search approved plant protection products from the BLW Pflanzenschutzmittelverzeichnis. Filter by active substance, target pest, or crop."
+    }
+  ],
+  "remoteInstructions": "This server provides Swiss crop protection data from the BLW Pflanzenschutzmittelverzeichnis, Agroscope, AGRIDEA, and the Aktionsplan Pflanzenschutzmittel. Use search_pests for broad queries, get_pest_details for full profiles, get_treatments for control options, get_ipm_guidance for OELN thresholds and monitoring, search_crop_threats for all threats to a crop, identify_from_symptoms for differential diagnosis, and get_approved_products for BLW-registered products."
+}
