@@ -1,4 +1,5 @@
 import { buildMeta } from '../metadata.js';
+import { buildCitation } from '../citation.js';
 import { validateJurisdiction } from '../jurisdiction.js';
 import type { Database } from '../db.js';
 
@@ -52,5 +53,11 @@ export function handleGetIpmGuidance(db: Database, args: GetIpmGuidanceArgs) {
       notes: g.notes,
     })),
     _meta: buildMeta(),
+    _citation: buildCitation(
+      `CH IPM Guidance — ${args.crop}`,
+      `Swiss IPM guidance for ${args.crop}`,
+      'get_ipm_guidance',
+      { crop: args.crop, ...(args.pest_id ? { pest_id: args.pest_id } : {}) },
+    ),
   };
 }
