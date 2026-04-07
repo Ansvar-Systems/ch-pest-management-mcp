@@ -1,4 +1,5 @@
 import { buildMeta } from '../metadata.js';
+import { buildCitation } from '../citation.js';
 import { validateJurisdiction } from '../jurisdiction.js';
 import type { Database } from '../db.js';
 
@@ -64,5 +65,12 @@ export function handleGetApprovedProducts(db: Database, args: GetApprovedProduct
     })),
     warning: 'Immer aktuelle Zulassung auf psm.admin.ch pruefen. Fachbewilligung PSM erforderlich.',
     _meta: buildMeta(),
+    _citation: buildCitation(
+      'CH Approved Plant Protection Products',
+      `Swiss approved plant protection products${args.active_substance ? ` (${args.active_substance})` : ''}`,
+      'get_approved_products',
+      { ...(args.active_substance ? { active_substance: args.active_substance } : {}), ...(args.crop ? { crop: args.crop } : {}) },
+      'https://www.psm.admin.ch',
+    ),
   };
 }
